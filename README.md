@@ -467,7 +467,7 @@ Contributions are welcome! Please:
 
 ---
 
-## 📚 Additional Resources
+## 📚 Additional Resources For full version contact, engineerstechbd.com
 
 - [PyQt6 Documentation](https://doc.qt.io/qtforpython-6/)
 - [Linux Desktop Integration](https://specifications.freedesktop.org/)
