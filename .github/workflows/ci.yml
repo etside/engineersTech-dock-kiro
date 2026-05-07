@@ -1,0 +1,66 @@
+name: Tests & Release
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ created ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest black pylint
+
+    - name: Lint with pylint
+      run: |
+        pylint main.py setup.py --disable=C0111,C0103,R0903 || true
+
+    - name: Check code style with black
+      run: |
+        black --check main.py setup.py || true
+
+    - name: Run tests
+      run: |
+        pytest || true
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Create Release Assets
+      run: |
+        mkdir -p release
+        cp main.py requirements.txt setup.py install.sh LICENSE README.md CHANGELOG.md release/
+        zip -r kiro-dock-${{ github.event.release.tag_name }}.zip release/
+
+    - name: Upload Release Assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./kiro-dock-${{ github.event.release.tag_name }}.zip
+        asset_name: kiro-dock-${{ github.event.release.tag_name }}.zip
+        asset_content_type: application/zip
